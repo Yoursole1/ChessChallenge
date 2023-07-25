@@ -7,16 +7,41 @@ public class MyBot : IChessBot
 
     public Move Think(Board board, Timer timer)
     {
-        
+        bool maximizer = board.IsWhiteToMove;
         Move[] moves = board.GetLegalMoves();
-        Console.WriteLine(staticEvaluation(board));
-        return moves[0];
+        
+        Move bestMove = moves[0];
+        double bestEval = maximizer ? double.MinValue : double.MaxValue;
+
+        foreach (Move m in moves){
+            double e = eval(m, board);
+            if (maximizer && e >= bestEval){
+                bestMove = m;
+                bestEval = e;
+            }
+            if(!maximizer && e <= bestEval){
+                bestMove = m;
+                bestEval = e;
+            }
+        }
+
+
+        return bestMove;
     }
+
+    
 
     private Move search(Board board){
 
 
         return new Move();
+    }
+
+    private double eval(Move m, Board b){
+        b.MakeMove(m);
+        double evaluation = staticEvaluation(b);
+        b.UndoMove(m);
+        return evaluation;
     }
 
     private double staticEvaluation(Board board){
