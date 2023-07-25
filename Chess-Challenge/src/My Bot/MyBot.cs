@@ -24,8 +24,7 @@ public class MyBot : IChessBot
             if (!maximizer && e <= bestEval)
             {
                 bestMove = m;
-                bestEval = e; //
-                
+                bestEval = e; 
             }
         }
 
@@ -99,15 +98,27 @@ public class MyBot : IChessBot
         }
 
 
-        if (board.IsWhiteToMove && board.IsInCheckmate())
+        if (board.IsWhiteToMove)
         {
-            return double.MinValue;
+            if(board.IsInCheckmate()){
+                return double.MinValue;
+            }
+            if(board.IsInCheck()){
+                eval -= 3;
+            }
         }
 
-        if (!board.IsWhiteToMove && board.IsInCheckmate())
+        if (!board.IsWhiteToMove)
         {
-            return double.MaxValue;
+            if(board.IsInCheckmate()){
+                return double.MaxValue;
+            }
+            if(board.IsInCheck()){
+                eval += 3;
+            }
         }
+
+
 
         eval += scores[0] * board.GetPieceList(PieceType.Pawn, true).Count +
                 (scores[1] + (1/8) * board.GetPieceList(PieceType.Pawn, true).Count - 1) * board.GetPieceList(PieceType.Knight, true).Count +
