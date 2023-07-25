@@ -14,7 +14,7 @@ public class MyBot : IChessBot
         double bestEval = maximizer ? double.MinValue : double.MaxValue;
 
         foreach (Move m in moves){
-            double e = eval(m, board);
+            double e = eval(m, board, timer.MillisecondsRemaining / 1000);
             if (maximizer && e >= bestEval){
                 bestMove = m;
                 bestEval = e;
@@ -67,9 +67,10 @@ public class MyBot : IChessBot
         }
     }
 
-    private double eval(Move m, Board b){
+    private double eval(Move m, Board b, int time){
         b.MakeMove(m);
-        double evaluation = search(b, 3, double.MinValue, double.MaxValue, b.IsWhiteToMove);
+        int depth = (time < 20) ? 3 : 4;
+        double evaluation = search(b, depth, double.MinValue, double.MaxValue, b.IsWhiteToMove);
         b.UndoMove(m);
         return evaluation;
     }
@@ -81,9 +82,11 @@ public class MyBot : IChessBot
             return 0;
         }
 
+
         if (board.IsWhiteToMove && board.IsInCheckmate()){
             return double.MinValue;
         }
+
         if (!board.IsWhiteToMove && board.IsInCheckmate()){
             return double.MaxValue;
         }
