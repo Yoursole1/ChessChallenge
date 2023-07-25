@@ -31,15 +31,45 @@ public class MyBot : IChessBot
 
     
 
-    private Move search(Board board){
+    private double search(Board board, int depth, double a, double b, bool maximizer){
+        if (depth == 0 || board.IsInCheckmate() || board.IsDraw()){
+            return staticEvaluation(board);
+        }
 
+        if (maximizer){
+            double max = double.MinValue;
+            foreach (Move move in board.GetLegalMoves()){
+                board.MakeMove(move);
+                double eval = search(board, depth - 1, a, b, false);
+                board.UndoMove(move);
+                max = Math.Max(max, eval);
 
-        return new Move();
+                a = Math.Max(a, eval);
+                if (b <= a){
+                    break;
+                }
+            }
+            return max;
+        } else {
+            double min = double.MaxValue;
+            foreach (Move move in board.GetLegalMoves()){
+                board.MakeMove(move);
+                double eval = search(board, depth - 1, a, b, true);
+                board.UndoMove(move);
+                min = Math.Min(min, eval);
+
+                b = Math.Min(b, eval);
+                if (b <= a){
+                    break;
+                }
+            }
+            return min;
+        }
     }
 
     private double eval(Move m, Board b){
         b.MakeMove(m);
-        double evaluation = staticEvaluation(b);
+        double evaluation = search(b, 3, double.MinValue, double.MaxValue, b.IsWhiteToMove);
         b.UndoMove(m);
         return evaluation;
     }
@@ -51,11 +81,11 @@ public class MyBot : IChessBot
             return 0;
         }
 
-        if (board.IsWhiteToMove && board.IsInCheck() && board.IsInCheckmate()){
-            return int.MaxValue;
+        if (board.IsWhiteToMove && board.IsInCheckmate()){
+            return double.MinValue;
         }
-        if (!board.IsWhiteToMove && board.IsInCheck() && board.IsInCheckmate()){
-            return int.MinValue;
+        if (!board.IsWhiteToMove && board.IsInCheckmate()){
+            return double.MaxValue;
         }
 
         eval += scores[0] * board.GetPieceList(PieceType.Pawn, true).Count + 
