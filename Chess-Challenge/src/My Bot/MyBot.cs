@@ -3,7 +3,7 @@ using System;
 
 public class MyBot : IChessBot
 {
-    private static double[] scores = { 1, 3, 3.5, 5, 8 }; // pawn, knight, bishop, rook, queen
+    private static double[] scores = { 1, 3, 3.5, 5, 10 }; // pawn, knight, bishop, rook, queen
 
     public Move Think(Board board, Timer timer)
     {
@@ -133,27 +133,90 @@ public class MyBot : IChessBot
                 (scores[3] + (-1/8) * board.GetPieceList(PieceType.Pawn, true).Count + 1) * board.GetPieceList(PieceType.Rook, false).Count +
                 scores[4] * board.GetPieceList(PieceType.Queen, false).Count;
 
-        // eval += pawnEval(board) + knightEval(board) + bishopEval(board) + rookEval(board) + queenEval(board) + kingEval(board);
+        eval += kingEval(board) + developmentEval(board);
 
         return eval;
     }
 
-    // private double pawnEval(Board b){
+    private double developmentEval(Board b){
+        double eval = 0;
 
-    // }
-    // private double knightEval(Board b){
+        // foreach (Piece p in b.GetPieceList(PieceType.Knight, true)){
+        //     if(p.Square.Rank == 0){
+        //         eval -= 1;
+        //     }
+        // }
+        // foreach (Piece p in b.GetPieceList(PieceType.Knight, false)){
+        //     if(p.Square.Rank == 7){
+        //         eval += 1;
+        //     }
+        // }
 
-    // }
-    // private double bishopEval(Board b){
+        // foreach (Piece p in b.GetPieceList(PieceType.Bishop, true)){
+        //     if(p.Square.Rank == 0){
+        //         eval -= 0.5;
+        //     }
+        // }
+        // foreach (Piece p in b.GetPieceList(PieceType.Bishop, false)){
+        //     if(p.Square.Rank == 7){
+        //         eval += 0.5;
+        //     }
+        // }
 
-    // }
-    // private double rookEval(Board b){
+        foreach (Piece p in b.GetPieceList(PieceType.Pawn, true)){
+            int min = 10;
+            foreach (Piece c in b.GetPieceList(PieceType.Pawn, true)){
+                min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
+            }
 
-    // }
-    // private double queenEval(Board b){
+            if (min == 1){
+                eval += 0.2;
+            }
+        }
+        
+        foreach (Piece p in b.GetPieceList(PieceType.Knight, false)){
+            int min = 10;
+            foreach (Piece c in b.GetPieceList(PieceType.Pawn, true)){
+                min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
+            }
 
-    // }
-    // private double kingEval(Board b){
+            if (min == 1){
+                eval -= 0.2;
+            }
+        }
 
-    // }
+        return eval;
+    }
+
+    private double kingEval(Board b){
+        if (isEndgame(b)){
+            return 0;
+        }
+
+        double eval = 0;
+        if (!isEndgame(b)){
+            eval += 0.5 * Math.Abs(b.GetKingSquare(true).File - 3.5) - 0.5 * Math.Abs(b.GetKingSquare(false).File - 3.5); // move king to sides
+        }
+        
+        
+        if (b.GetKingSquare(true).Rank > 0) {
+            eval -= 1;
+        }
+        if (b.GetKingSquare(false).Rank < 7) {
+            eval += 1;
+        }
+
+        return eval;
+    }
+
+
+    private bool isEndgame(Board b){
+        int v = 2 * (b.GetPieceList(PieceType.Pawn, true).Count + b.GetPieceList(PieceType.Pawn, false).Count) + 
+                b.GetPieceList(PieceType.Knight, true).Count + b.GetPieceList(PieceType.Knight, false).Count + 
+                b.GetPieceList(PieceType.Bishop, true).Count + b.GetPieceList(PieceType.Bishop, false).Count +
+                b.GetPieceList(PieceType.Rook, true).Count + b.GetPieceList(PieceType.Rook, false).Count +
+                b.GetPieceList(PieceType.Queen, true).Count + b.GetPieceList(PieceType.Queen, false).Count;
+
+        return v < 30; // arbitrary value picked because it works
+    }
 }
