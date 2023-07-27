@@ -12,7 +12,7 @@ public class MyBot : IChessBot
     }
 
     
-    public SearchResult Search(Board board, Timer timer){
+    public SearchResult Search(Board board, Timer timer, int depth, double a, double b){
         
     }
 }
