@@ -6,17 +6,20 @@ public class MyBot : IChessBot
 {
 
     // prep for 50 move game
-    const int timePerMove = 600; //MS 1200
+    const int timePerMove = 1200; //MS 1200
     static IDictionary <ulong, double> transposition = new Dictionary<ulong, double>(); // should be an array ;-;
 
-    static int[] scores = {1, 3, 3, 5, 9};
+    static double[] scores = {1, 3, 3.5, 5, 9};
 
     public Move Think(Board board, Timer timer)
     {
         Move best = Move.NullMove;
         for (int i = 1; timer.MillisecondsElapsedThisTurn < timePerMove; i++){
-            best = Search(board, timer, Move.NullMove, i, int.MinValue, int.MaxValue, board.IsWhiteToMove).best;
-            Console.WriteLine(i);
+            Move result = Search(board, timer, Move.NullMove, i, int.MinValue, int.MaxValue, board.IsWhiteToMove).best;
+            if (result == Move.NullMove){ // search failed time
+                break;
+            }
+            best = result;
         }
         return best;
     }
@@ -27,6 +30,10 @@ public class MyBot : IChessBot
         if (depth == 0 || board.IsInCheckmate() || board.IsDraw())
         {
             return new SearchResult(lastMove, StaticEvaluation(board));
+        }
+
+        if(timer.MillisecondsElapsedThisTurn >= timePerMove){
+            return new SearchResult(Move.NullMove, 0);
         }
         
         if (maximizer)
@@ -47,6 +54,9 @@ public class MyBot : IChessBot
                 {
                     break;
                 }
+            }
+            if(timer.MillisecondsElapsedThisTurn >= timePerMove){
+                return new SearchResult(Move.NullMove, 0);
             }
             return max;
         }
@@ -69,13 +79,16 @@ public class MyBot : IChessBot
                     break;
                 }
             }
+            if(timer.MillisecondsElapsedThisTurn >= timePerMove){
+                return new SearchResult(Move.NullMove, 0);
+            }
             return min;
         }
     }
 
     private double StaticEvaluation(Board board)
     {
-        int eval = 0;
+        double eval = 0;
 
         if (board.IsDraw())
         {
@@ -86,20 +99,20 @@ public class MyBot : IChessBot
         if (board.IsWhiteToMove)
         {
             if(board.IsInCheckmate()){
-                return int.MinValue;
+                return double.MinValue;
             }
             if(board.IsInCheck()){
-                eval -= 1;
+                eval -= 3;
             }
         }
 
         if (!board.IsWhiteToMove)
         {
             if(board.IsInCheckmate()){
-                return int.MaxValue;
+                return double.MaxValue;
             }
             if(board.IsInCheck()){
-                eval += 1;
+                eval += 3;
             }
         }
 
@@ -118,8 +131,60 @@ public class MyBot : IChessBot
                 (scores[3] + (-1/8) * board.GetPieceList(PieceType.Pawn, true).Count + 1) * board.GetPieceList(PieceType.Rook, false).Count +
                 scores[4] * board.GetPieceList(PieceType.Queen, false).Count;
 
+        eval += kingEval(board) + developmentEval(board);
 
         return eval;
+    }
+
+    private double developmentEval(Board b){
+        double eval = 0;
+
+        foreach (Piece p in b.GetPieceList(PieceType.Pawn, true)){
+            int min = 10;
+            foreach (Piece c in b.GetPieceList(PieceType.Pawn, true)){
+                min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
+            }
+
+            if (min == 1){
+                eval += 0.2;
+            }
+        }
+        
+        foreach (Piece p in b.GetPieceList(PieceType.Knight, false)){
+            int min = 10;
+            foreach (Piece c in b.GetPieceList(PieceType.Pawn, true)){
+                min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
+            }
+
+            if (min == 1){
+                eval -= 0.2;
+            }
+        }
+
+        return eval;
+    }
+
+    private double kingEval(Board b){
+        if (isEndgame(b)){
+            return 0;
+        }
+
+        double eval = 0;        
+        
+        if (b.GetKingSquare(true).Rank > 0) {
+            eval -= 1;
+        }
+
+        if (b.GetKingSquare(false).Rank < 7) {
+            eval += 1;
+        }
+
+        return eval;
+    }
+
+
+    private bool isEndgame(Board b){
+        return b.GameMoveHistory.GetLength(0) > 25; 
     }
 }
 
