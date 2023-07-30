@@ -7,7 +7,6 @@ public class MyBot : IChessBot
 
     // prep for 50 move game
     const int timePerMove = 900; //MS 1200
-    static IDictionary <ulong, double> transposition = new Dictionary<ulong, double>(); // should be an array ;-;
 
     static double[] scores = {1, 3, 3.5, 5, 9};
 
@@ -23,11 +22,29 @@ public class MyBot : IChessBot
         }
         return best;
     }
-
-
     
+    static Dictionary<ulong, KeyValuePair<double, int>> tt = new Dictionary<ulong, KeyValuePair<double, int>>();
     public SearchResult Search(Board board, Timer timer, Move lastMove, int depth, double a, double b, int color)
     {
+        ulong positionHash = board.ZobristKey;
+
+        if (tt.ContainsKey(positionHash))
+        {
+            var ttEntry = tt[positionHash];
+
+            if (ttEntry.Value >= depth)
+            {
+                double storedEvaluation = ttEntry.Key;
+
+                if (storedEvaluation >= b)
+                    return new SearchResult(lastMove, b);
+                if (storedEvaluation <= a)
+                    return new SearchResult(lastMove, a);
+
+                a = Math.Max(a, storedEvaluation);
+            }
+        }
+        
         if (depth == 0 || board.IsInCheckmate() || board.IsDraw())
         {
             return new SearchResult(lastMove, color * StaticEvaluation(board));
@@ -40,7 +57,25 @@ public class MyBot : IChessBot
 
         SearchResult bestResult = new SearchResult(Move.NullMove, int.MinValue);
 
-        foreach (Move move in board.GetLegalMoves())
+        List<Move> legalMoves = new List<Move>(board.GetLegalMoves());
+
+        legalMoves.Sort((move1, move2) =>
+        {
+            board.MakeMove(move1);
+            ulong hash1 = board.ZobristKey;
+            board.UndoMove(move1);
+
+            board.MakeMove(move2);
+            ulong hash2 = board.ZobristKey;
+            board.UndoMove(move2);
+
+            double eval1 = tt.ContainsKey(hash1) ? tt[hash1].Key : 0;
+            double eval2 = tt.ContainsKey(hash2) ? tt[hash2].Key : 0;
+
+            return eval2.CompareTo(eval1);
+        });
+
+        foreach (Move move in legalMoves)
         {
             board.MakeMove(move);
             SearchResult result = Search(board, timer, move, depth - 1, -b, -a, -color);
@@ -65,6 +100,8 @@ public class MyBot : IChessBot
             return new SearchResult(Move.NullMove, 0);
         }
 
+        tt[positionHash] = new KeyValuePair<double, int>(bestResult.evaluation, depth);
+        
         return bestResult;
     }
 
@@ -114,31 +151,11 @@ public class MyBot : IChessBot
                 (scores[3] + (-1/8) * board.GetPieceList(PieceType.Pawn, true).Count + 1) * board.GetPieceList(PieceType.Rook, false).Count +
                 scores[4] * board.GetPieceList(PieceType.Queen, false).Count;
 
-        eval += pawnEval(board, true) + pawnEval(board, false) + developmentEval(board);
+        eval += developmentEval(board);
 
         return eval;
     }
 
-
-    public double pawnEval(Board b, bool white){
-        double eval = 0;
-        foreach (Piece p in b.GetPieceList(PieceType.Pawn, white)){
-            int min = 10;
-            foreach (Piece c in b.GetPieceList(PieceType.Pawn, white)){
-                min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
-            }
-
-            if (min == 1){
-                if (white){
-                    eval += 0.2;
-                }else{
-                    eval -= 0.2;
-                }
-                
-            }
-        }
-        return eval;
-    }
 
     public double developmentEval(Board b){
         double eval = 0;
