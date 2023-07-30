@@ -102,7 +102,7 @@ public class MyBot : IChessBot
                 return double.MinValue;
             }
             if(board.IsInCheck()){
-                eval -= 3;
+                eval -= 0.5;
             }
         }
 
@@ -112,7 +112,7 @@ public class MyBot : IChessBot
                 return double.MaxValue;
             }
             if(board.IsInCheck()){
-                eval += 3;
+                eval += 0.5;
             }
         }
 
@@ -131,60 +131,30 @@ public class MyBot : IChessBot
                 (scores[3] + (-1/8) * board.GetPieceList(PieceType.Pawn, true).Count + 1) * board.GetPieceList(PieceType.Rook, false).Count +
                 scores[4] * board.GetPieceList(PieceType.Queen, false).Count;
 
-        eval += kingEval(board) + developmentEval(board);
+        eval += pawnEval(board, true) + pawnEval(board, false);
 
         return eval;
     }
 
-    private double developmentEval(Board b){
+
+    public double pawnEval(Board b, bool white){
         double eval = 0;
-
-        foreach (Piece p in b.GetPieceList(PieceType.Pawn, true)){
+        foreach (Piece p in b.GetPieceList(PieceType.Pawn, white)){
             int min = 10;
-            foreach (Piece c in b.GetPieceList(PieceType.Pawn, true)){
+            foreach (Piece c in b.GetPieceList(PieceType.Pawn, white)){
                 min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
             }
 
             if (min == 1){
-                eval += 0.2;
+                if (white){
+                    eval += 0.2;
+                }else{
+                    eval -= 0.2;
+                }
+                
             }
         }
-        
-        foreach (Piece p in b.GetPieceList(PieceType.Knight, false)){
-            int min = 10;
-            foreach (Piece c in b.GetPieceList(PieceType.Pawn, true)){
-                min = Math.Min(min, Math.Abs(c.Square.File - p.Square.File));
-            }
-
-            if (min == 1){
-                eval -= 0.2;
-            }
-        }
-
         return eval;
-    }
-
-    private double kingEval(Board b){
-        if (isEndgame(b)){
-            return 0;
-        }
-
-        double eval = 0;        
-        
-        if (b.GetKingSquare(true).Rank > 0) {
-            eval -= 1;
-        }
-
-        if (b.GetKingSquare(false).Rank < 7) {
-            eval += 1;
-        }
-
-        return eval;
-    }
-
-
-    private bool isEndgame(Board b){
-        return b.GameMoveHistory.GetLength(0) > 25; 
     }
 }
 
