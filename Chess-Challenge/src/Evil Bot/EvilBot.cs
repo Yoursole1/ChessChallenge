@@ -144,27 +144,27 @@ namespace ChessChallenge.Example
     private double developmentEval(Board b){
         double eval = 0;
 
-        // foreach (Piece p in b.GetPieceList(PieceType.Knight, true)){
-        //     if(p.Square.Rank == 0){
-        //         eval -= 1;
-        //     }
-        // }
-        // foreach (Piece p in b.GetPieceList(PieceType.Knight, false)){
-        //     if(p.Square.Rank == 7){
-        //         eval += 1;
-        //     }
-        // }
+        foreach (Piece p in b.GetPieceList(PieceType.Knight, true)){
+            if(p.Square.Rank == 0){
+                eval -= 1;
+            }
+        }
+        foreach (Piece p in b.GetPieceList(PieceType.Knight, false)){
+            if(p.Square.Rank == 7){
+                eval += 1;
+            }
+        }
 
-        // foreach (Piece p in b.GetPieceList(PieceType.Bishop, true)){
-        //     if(p.Square.Rank == 0){
-        //         eval -= 0.5;
-        //     }
-        // }
-        // foreach (Piece p in b.GetPieceList(PieceType.Bishop, false)){
-        //     if(p.Square.Rank == 7){
-        //         eval += 0.5;
-        //     }
-        // }
+        foreach (Piece p in b.GetPieceList(PieceType.Bishop, true)){
+            if(p.Square.Rank == 0){
+                eval -= 0.5;
+            }
+        }
+        foreach (Piece p in b.GetPieceList(PieceType.Bishop, false)){
+            if(p.Square.Rank == 7){
+                eval += 0.5;
+            }
+        }
 
         foreach (Piece p in b.GetPieceList(PieceType.Pawn, true)){
             int min = 10;

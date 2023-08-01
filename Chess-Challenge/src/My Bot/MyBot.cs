@@ -13,39 +13,36 @@ public class MyBot : IChessBot
     public Move Think(Board board, Timer timer)
     {
         Move best = Move.NullMove;
-        for (int i = 1; timer.MillisecondsElapsedThisTurn < timePerMove; i++){
-            Move result = Search(board, timer, Move.NullMove, i, int.MinValue, int.MaxValue, board.IsWhiteToMove ? 1 : -1).best;
+        for (int i = 1; i < 10; i++){
+            Move result = Search(board, timer, Move.NullMove, i, double.MinValue, double.MaxValue, board.IsWhiteToMove ? 1 : -1).best;
             if (result == Move.NullMove){ // search failed time
                 break;
             }
             best = result;
         }
+
+        if (best.IsNull){
+            throw new Exception();
+        }
         return best;
+        
     }
     
     static Dictionary<ulong, KeyValuePair<double, int>> tt = new Dictionary<ulong, KeyValuePair<double, int>>();
     public SearchResult Search(Board board, Timer timer, Move lastMove, int depth, double a, double b, int color)
     {
+        
         ulong positionHash = board.ZobristKey;
 
-        if (tt.ContainsKey(positionHash))
+        if (tt.TryGetValue(positionHash, out var ttEntry) && !lastMove.IsNull)
         {
-            var ttEntry = tt[positionHash];
-
             if (ttEntry.Value >= depth)
             {
-                double storedEvaluation = ttEntry.Key;
-
-                if (storedEvaluation >= b)
-                    return new SearchResult(lastMove, b);
-                if (storedEvaluation <= a)
-                    return new SearchResult(lastMove, a);
-
-                a = Math.Max(a, storedEvaluation);
+                return new SearchResult(lastMove, ttEntry.Key);
             }
         }
         
-        if (depth == 0 || board.IsInCheckmate() || board.IsDraw())
+        if (depth <= 0 || board.IsInCheckmate() || board.IsDraw())
         {
             return new SearchResult(lastMove, color * StaticEvaluation(board));
         }
@@ -58,21 +55,13 @@ public class MyBot : IChessBot
         SearchResult bestResult = new SearchResult(Move.NullMove, int.MinValue);
 
         List<Move> legalMoves = new List<Move>(board.GetLegalMoves());
-
-        legalMoves.Sort((move1, move2) =>
+        legalMoves.Sort((m1, m2) =>
         {
-            board.MakeMove(move1);
-            ulong hash1 = board.ZobristKey;
-            board.UndoMove(move1);
-
-            board.MakeMove(move2);
-            ulong hash2 = board.ZobristKey;
-            board.UndoMove(move2);
-
-            double eval1 = tt.ContainsKey(hash1) ? tt[hash1].Key : 0;
-            double eval2 = tt.ContainsKey(hash2) ? tt[hash2].Key : 0;
-
-            return eval2.CompareTo(eval1);
+            if (m1.IsCapture && !m2.IsCapture)
+                return -1;
+            if (!m1.IsCapture && m2.IsCapture)
+                return 1;
+            return 0;
         });
 
         foreach (Move move in legalMoves)
@@ -95,12 +84,13 @@ public class MyBot : IChessBot
             }
         }
 
+        tt[positionHash] = new KeyValuePair<double, int>(bestResult.evaluation, depth);
+
+
         if (timer.MillisecondsElapsedThisTurn >= timePerMove)
         {
             return new SearchResult(Move.NullMove, 0);
         }
-
-        tt[positionHash] = new KeyValuePair<double, int>(bestResult.evaluation, depth);
         
         return bestResult;
     }
