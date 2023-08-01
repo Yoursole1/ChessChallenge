@@ -22,7 +22,7 @@ public class MyBot : IChessBot
         }
 
         if(best.IsNull){
-            best = board.GetLegalMoves()[0];
+            best = board.GetLegalMoves()[0]; // silly hack to make not error lmao
         }
         return best;
     }
