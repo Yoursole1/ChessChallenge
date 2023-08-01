@@ -21,11 +21,10 @@ public class MyBot : IChessBot
             best = result;
         }
 
-        if (best.IsNull){
-            throw new Exception();
+        if(best.IsNull){
+            best = board.GetLegalMoves()[0];
         }
         return best;
-        
     }
     
     static Dictionary<ulong, KeyValuePair<double, int>> tt = new Dictionary<ulong, KeyValuePair<double, int>>();
