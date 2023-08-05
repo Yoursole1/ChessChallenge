@@ -13,16 +13,43 @@ public class MyBot : IChessBot
     private ulong[] KNIGHT_PST = {5022222202333333223, 4999932239999322399, 1993223799932233333, 1320522225000000000};
     private ulong[] PAWN_PST = {2222222228888988866, 9678666444674443345, 1633333345333333003, 1332222222200000000};
     // To be used when the enemy king is all alone (or with only pawns left maybe, to push the king to the sides of the board)
-    private ulong[] KING_EDGE_PST = {};
+    // private ulong[] KING_EDGE_PST = {};
 
 
     public Move Think(Board board, Timer timer)
     {
-        return Move.NullMove;
+        Static_Evaluation(board);
+        return board.GetLegalMoves()[0];
     }
 
 
     public int Static_Evaluation(Board board){
-        return 0;
+        int eval = 0;
+
+        foreach (PieceType type in Enum.GetValues(typeof(PieceType))){
+
+            if (type == PieceType.None){ // find way to make this more compact
+                continue;
+            }
+            ulong bitboardW = board.GetPieceBitboard(type, true);
+            ulong bitboardB = board.GetPieceBitboard(type, false);
+
+            ulong piecesW = HammingWeight(bitboardW);
+            ulong piecesB = HammingWeight(bitboardB);
+        }
+        
+        return eval;
+    }
+
+    /**
+    * Common algorithm for hamming weight
+    * Found here: https://www.volatileread.com/UtilityLibrary/Index?id=2093
+    * Adapted for ulong
+    */
+    public ulong HammingWeight(ulong value)
+    {
+        value -= (value >> 1) & 0x5555555555555555;
+        value = (value & 0x3333333333333333) + ((value >> 2) & 0x3333333333333333);
+        return (((value + (value >> 4)) & 0xF0F0F0F0F0F0F0F) * 0x101010101010101) >> 56;
     }
 }
