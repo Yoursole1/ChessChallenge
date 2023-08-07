@@ -14,6 +14,7 @@ public class MyBot : IChessBot
     private ulong[] PAWN_PST = {2222222228888988866, 9678666444674443345, 1633333345333333003, 1332222222200000000};
     // To be used when the enemy king is all alone (or with only pawns left maybe, to push the king to the sides of the board)
     // private ulong[] KING_EDGE_PST = {};
+    private int[] PIECES = {100, 300, 350, 500, 900};
 
 
     public Move Think(Board board, Timer timer)
@@ -34,22 +35,13 @@ public class MyBot : IChessBot
             ulong bitboardW = board.GetPieceBitboard(type, true);
             ulong bitboardB = board.GetPieceBitboard(type, false);
 
-            ulong piecesW = HammingWeight(bitboardW);
-            ulong piecesB = HammingWeight(bitboardB);
+            eval += PIECES[(int)type + 1] * (board.GetPieceList(type, true).Count - board.GetPieceList(type, false).Count);
+
+            
+
         }
         
         return eval;
     }
 
-    /**
-    * Common algorithm for hamming weight
-    * Found here: https://www.volatileread.com/UtilityLibrary/Index?id=2093
-    * Adapted for ulong
-    */
-    public ulong HammingWeight(ulong value)
-    {
-        value -= (value >> 1) & 0x5555555555555555;
-        value = (value & 0x3333333333333333) + ((value >> 2) & 0x3333333333333333);
-        return (((value + (value >> 4)) & 0xF0F0F0F0F0F0F0F) * 0x101010101010101) >> 56;
-    }
 }
