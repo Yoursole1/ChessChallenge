@@ -37,14 +37,19 @@ public class MyBot : IChessBot
             }
             ulong bitboardW = board.GetPieceBitboard(type, true);
             ulong b = board.GetPieceBitboard(type, false);
+
             ulong bitboardB = 0;
 
-            while (b != 0)
-            {
-                bitboardB <<= 1;          
-                bitboardB |= b & 1;      
-                b >>= 1;             
+            for (int i = 0; i < 64; i++){
+                if ((b & (1UL << i)) != 0){
+                    int reversedIndex = 63 - i;
+                    bitboardB |= 1UL << reversedIndex;
+                }
             }
+            
+            Console.WriteLine(bitboardW);
+            Console.WriteLine(bitboardB);
+            Console.WriteLine("---");
 
 
             eval += PIECES[(int)type - 1] * (board.GetPieceList(type, true).Count - board.GetPieceList(type, false).Count);
