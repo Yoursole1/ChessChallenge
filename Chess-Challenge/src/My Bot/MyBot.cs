@@ -46,10 +46,6 @@ public class MyBot : IChessBot
                     bitboardB |= 1UL << reversedIndex;
                 }
             }
-            
-            Console.WriteLine(bitboardW);
-            Console.WriteLine(bitboardB);
-            Console.WriteLine("---");
 
 
             eval += PIECES[(int)type - 1] * (board.GetPieceList(type, true).Count - board.GetPieceList(type, false).Count);
