@@ -16,8 +16,7 @@ public class MyBot : IChessBot
         {5013333101344443134, 6777743347997433479, 1974334444443134444, 1310133331000000000},
         {3333333333333333333, 2333333333993333339, 1933333333333333003, 1333390039300000000}
     };
-    // To be used when the enemy king is all alone (or with only pawns left maybe, to push the king to the sides of the board)
-    // private ulong[] KING_EDGE_PST = {};
+
     private int[] PIECES = {100, 300, 350, 500, 900, 0};
 
     public Move Think(Board board, Timer timer)
@@ -34,6 +33,8 @@ public class MyBot : IChessBot
         if(best.IsNull){
             best = board.GetLegalMoves()[0]; // silly hack to make not error lmao
         }
+
+        Console.WriteLine(Static_Evaluation(board));
         return best;
     }
     
@@ -141,6 +142,7 @@ public class MyBot : IChessBot
             }
             ulong bitboardW = board.GetPieceBitboard(type, true);
             ulong b = board.GetPieceBitboard(type, false);
+
             ulong bitboardB = 0;
 
             for (int i = 0; i < 64; i++){
@@ -149,6 +151,7 @@ public class MyBot : IChessBot
                     bitboardB |= 1UL << reversedIndex;
                 }
             }
+
 
             eval += PIECES[(int)type - 1] * (board.GetPieceList(type, true).Count - board.GetPieceList(type, false).Count);
 
