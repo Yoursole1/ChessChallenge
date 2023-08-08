@@ -22,19 +22,23 @@ public class MyBot : IChessBot
     public Move Think(Board board, Timer timer)
     {
         Move best = Move.NullMove;
-        for (int i = 1; i < 10; i++){
-            Move result = Search(board, timer, Move.NullMove, i, double.MinValue, double.MaxValue, board.IsWhiteToMove ? 1 : -1).best;
-            if (result == Move.NullMove){ // search failed time
-                break;
+        if (timer.MillisecondsRemaining > 2000){
+            for (int i = 1; i < 10; i++){
+                Move result = Search(board, timer, Move.NullMove, i, double.MinValue, double.MaxValue, board.IsWhiteToMove ? 1 : -1).best;
+                if (result == Move.NullMove){ // search failed time
+                    break;
+                }
+                best = result;
             }
-            best = result;
+        }else{
+            best =  Search(board, timer, Move.NullMove, 3, double.MinValue, double.MaxValue, board.IsWhiteToMove ? 1 : -1).best;
         }
+        
 
         if(best.IsNull){
             best = board.GetLegalMoves()[0]; // silly hack to make not error lmao
         }
 
-        Console.WriteLine(Static_Evaluation(board));
         return best;
     }
     
@@ -169,8 +173,9 @@ public class MyBot : IChessBot
                 int multiplier = (int) (pst / Math.Pow(10, 18 - id) % 10);
 
                 multiplier -= PST[(int)type - 1, 2] / Math.Pow(10, 18) == 9 ? 0 : (int)(PST[(int)type - 1, 0] / (ulong) Math.Pow(10, 18));
-                
                 multiplier *= (int)(PST[(int)type - 1, 1] / (ulong) Math.Pow(10, 18));
+                multiplier /= (board.GameMoveHistory.Length + 1);
+
                 eval += bitW * multiplier;
                 eval -= bitB * multiplier;
             }
