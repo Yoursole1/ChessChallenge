@@ -174,7 +174,7 @@ public class MyBot : IChessBot
 
                 multiplier -= PST[(int)type - 1, 2] / Math.Pow(10, 18) == 9 ? 0 : (int)(PST[(int)type - 1, 0] / (ulong) Math.Pow(10, 18));
                 multiplier *= (int)(PST[(int)type - 1, 1] / (ulong) Math.Pow(10, 18));
-                multiplier /= (board.GameMoveHistory.Length + 1);
+                multiplier *= (board.GameMoveHistory.Length > 20) ? 0 : 1;
 
                 eval += bitW * multiplier;
                 eval -= bitB * multiplier;
